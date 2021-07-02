@@ -1,0 +1,101 @@
+<html>
+
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<style>
+			html,
+			body,
+			#viewDiv {
+				padding: 0;
+				margin: 0;
+				height: 100%;
+				width: 100%;
+			}
+		</style>
+
+		<link rel="stylesheet" href="https://js.arcgis.com/4.19/esri/themes/light/main.css" />
+		<script src="https://js.arcgis.com/4.19/"></script>
+
+		<script>
+			require([
+				"esri/Map",
+				"esri/views/MapView",
+				"esri/layers/GeoJSONLayer",
+				"esri/layers/FeatureLayer",
+				"esri/smartMapping/renderers/dotDensity",
+				"esri/smartMapping/renderers/color",
+				"esri/PopupTemplate",
+				"esri/widgets/LayerList"
+			], (Map, 
+				MapView,
+				GeoJSONLayer,
+				FeatureLayer,
+				smartdotDensity,
+				colorR,
+				PT,
+				LayerList) => {
+				const map = new Map({
+					basemap: "satellite"
+				});
+
+				const view = new MapView({
+					container: "viewDiv",
+					map: map,
+					zoom: 5,
+					center: [114, 30]
+				});
+				
+				const llist = new LayerList({
+					view:view
+				});
+				view.ui.add(llist,{
+					position:"top-left"
+				});
+
+				const geoJSONLayer = new GeoJSONLayer({
+					title:"中国行政区划图",
+					url: "https://cxqttkl.github.io/web4gis15/china.geojson",
+					opacity: 0.5
+						
+				});
+				map.add(geoJSONLayer);
+				
+				danceurl = "https://services3.arcgis.com/U26uBjSD32d7xvm2/arcgis/rest/services/shp%E6%96%87%E4%BB%B6/FeatureServer";
+				const featurelayer = new FeatureLayer({
+					title:"非物质文化遗产传统舞蹈项目分布图",
+					url:danceurl,
+					
+				});
+				map.add(featurelayer);
+				
+				featurelayer.popupTemplate = new PT({
+				    title: "{类型}",
+				    content:"项目名称：{项目名};所在省份:{province};批次:{批次}{年份}"
+				});
+
+
+				
+				// let colorParams = {
+				// 	layer: geoJSONLayer,
+				// 	view: view,
+				// 	field: "pop2010",
+				// 	//normalizationField: "Area_sqkm",
+				// 	theme: "above-and-below"
+				// };
+
+				// colorR.createContinuousRenderer(colorParams)
+				// 	.then(function(response) {
+				// 		geoJSONLayer.renderer = response.renderer;
+				// 	});
+
+			});
+		</script>
+	</head>
+
+	<body>
+		<div id="viewDiv"></div>
+	</body>
+
+</html>
