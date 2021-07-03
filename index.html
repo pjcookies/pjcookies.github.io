@@ -1,0 +1,211 @@
+<html>
+
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+		<style>
+			html,
+			body,
+			#viewDiv {
+				padding: 0;
+				margin: 0;
+				height: 100%;
+				width: 100%;
+			}
+		</style>
+
+		<link rel="stylesheet" href="https://js.arcgis.com/4.19/esri/themes/light/main.css" />
+		<script src="https://js.arcgis.com/4.19/"></script>
+				
+		<script>
+			require([
+				"esri/Map",
+				"esri/views/MapView",
+				"esri/layers/GeoJSONLayer",
+				"esri/layers/FeatureLayer",
+				"esri/smartMapping/renderers/dotDensity",
+				"esri/smartMapping/renderers/color",
+				"esri/PopupTemplate",
+				"esri/widgets/LayerList"
+			], (Map, 
+				MapView,
+				GeoJSONLayer,
+				FeatureLayer,
+				smartdotDensity,
+				colorR,
+				PT,
+				LayerList) => {
+				const map = new Map({
+					basemap: "satellite"
+				});
+
+				const view = new MapView({
+					container: "viewDiv",
+					map: map,
+					zoom: 5,
+					center: [114, 30]
+				});
+				
+				const llist = new LayerList({
+					view:view
+				});
+				view.ui.add(llist,{
+					position:"top-left"
+				});
+				
+				view.on("pointer-move",
+				function(event){
+					let longi = view.toMap(event).longitude;
+					let lati = view.toMap(event).latitude;
+					var coordiv = document.getElementById("coordiv");
+					coordiv.innerHTML = "经度:"+longi.toFixed(2)+
+					";"+"纬度:"+lati.toFixed(2);
+				});
+				
+				var scale = document.getElementById("scale");
+				var scalediv = document.createElement("scalediv");
+				scale.appendChild(scalediv);
+				view.on(["pointer-down","mouse-wheel","pointer-move"],function(event){
+					var scale = view.scale.toFixed(0);
+					scalediv.innerHTML = "1:"+scale;
+				});
+
+				const geoJSONLayer = new GeoJSONLayer({
+					title:"中国行政区划图",
+					url: "https://cxqttkl.github.io/web4gis15/china.geojson",
+					opacity: 1
+						
+				});
+				map.add(geoJSONLayer);
+				
+				danceurl = "https://services3.arcgis.com/U26uBjSD32d7xvm2/arcgis/rest/services/shp%E6%96%87%E4%BB%B6/FeatureServer";
+				const featurelayer = new FeatureLayer({
+					title:"非物质文化遗产传统舞蹈项目分布图",
+					url:danceurl,
+					
+				});
+				map.add(featurelayer);
+				
+				featurelayer.popupTemplate = new PT({
+				    title: "{类型}",
+				    content:"项目名称：{项目名};所在省份:{province};批次:{批次}{年份}"
+				});
+				
+				geoJSONLayer.popupTemplate = new PT({
+				    title: "中国2000年和2010年各省份人口总数",
+				    content:"省份名称：{ENGLISH};2000年人口总数:{pop2000};2010年人口总数:{pop2010}"
+				});
+
+				
+				let colorParams = {
+					layer: geoJSONLayer,
+					view: view,
+					field: "pop2010",
+					//normalizationField: "Area_sqkm",
+					theme: "above-and-below"
+				};
+
+				colorR.createContinuousRenderer(colorParams)
+					.then(function(response) {
+						geoJSONLayer.renderer = response.renderer;
+					});
+
+			});
+		</script>
+	</head>
+
+	<body>
+		<div id="viewDiv"></div>
+		
+		<div id="coordiv" style="width:180px;
+		height:25px; 
+		bottom: 30px;
+		right: 30px;
+		position: absolute;
+		z-index: 9999;
+		background-color: white;">
+		</div>
+		
+		<div id="scale" style="height: 25px;
+		width: 150px;
+		top: 600px;
+		left: 10px;
+		z-index: 99999;
+		position:fixed;
+		overflow:auto;
+		background-color: white;">
+		</div>
+		
+		<div id="main1" style="height: 250px;
+		width: 525px;
+		top: 0px;
+		right: 10px;
+		z-index: 99999;
+		position:absolute;
+		overflow:auto;
+		background-color: white;">
+		</div>
+		
+		<div id="main2" style="height: 300px;
+		width: 525px;
+		top: 250px;
+		right: 10px;
+		z-index: 99999;
+		overflow-y:scroll;
+		overflow-x:scroll;
+		border: 1px solid black;
+		position:absolute;
+		overflow:auto;
+		background-color: white;">
+		</div>
+		
+		<script type="text/javascript">
+			var mychart = echarts.init(document.getElementById('main1'));
+			var mychart2 = echarts.init(document.getElementById('main2'));
+			var option1 = {
+				title:{
+					text:'各批次传统舞蹈非遗项目数'
+				},
+				tooltip:{},
+				legend:{
+					data:['非遗项目数']
+				},
+				xAxis:{
+					data:["第一批次","第二批次","第三批次","第四批次"]
+				},
+				yAxis:{},
+				series:[{
+					name:'非遗项目数',
+					type:'bar',
+					data:[75,140,64,44]
+				}]
+			};
+			option2 = {
+				title:{
+					text:'各省份非遗项目数'
+				},
+				tooltip:{},
+				legend:{
+					data:['非遗项目数']
+				},
+			    xAxis: {
+			        type: 'category',
+			        data: ['安徽省', '北京市', '福建省', '甘肃省', '广东省', '广西壮族自治区', '贵州省',"海南省","河北省","河南省","黑龙江省","湖北省","湖南省","吉林省","江苏省","江西省","辽宁省","内蒙古自治区","青海省","山东省","山西省","陕西省","上海市","四川省","西藏自治区","香港特别行政区","新疆维吾尔自治区","云南省","浙江省","重庆市"]
+			    },
+			    yAxis: {
+			        type: 'value'
+			    },
+			    series: [{
+					name:'非遗项目数',
+			        data: [9, 8, 7, 9, 30, 7, 16,2,10,10,1,10,12,5,6,9,8,4,9,12,13,6,4,19,31,1,16,27,18,4],
+			        type: 'line'
+			    }]
+			};
+			mychart.setOption(option1);
+			mychart2.setOption(option2);
+		</script>
+	</body>
+
+</html>
